@@ -1,0 +1,32 @@
+{
+    "fee_percent": 0.12,
+    "loglevel": "INFO",
+    "order_lifespan_seconds": 900,
+    "inter_apireq_sleep_seconds": 0.1,
+    "markets": [
+        {
+            "dp_base": 6,
+            "dp_quote": 6,
+            "pair": "XXLMZEUR",
+            "sell": {
+                "order_count": 3,
+                "pcnt_bump_a": 0.25,
+                "pcnt_bump_c": 0.5,
+                "rebuy_bump_percent": 2.5,
+                "vol_percent": 99.0
+            },
+            "buy": {
+                "order_count": 3,
+                "pcnt_bump_a": 0.25,
+                "pcnt_bump_c": 0.5,
+                "resell_bump_percent": 3.0,
+                "amount": 1000
+            },
+            "min": {
+                "ask": 0.01,
+                "bid": 0.01,
+                "vwap": 0.01
+            }
+        }
+    ]
+}
