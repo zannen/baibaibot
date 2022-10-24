@@ -9,7 +9,7 @@ import math
 import os
 import time
 import traceback
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from .kapi import KAPI
 from .ohlc import OHLC
@@ -144,11 +144,11 @@ class Bot:
             if typ == "buy":
                 # encumber quote
                 asset_quote = self.asset_pairs[pair]["quote"]
-                amt_c2 = vol * float(order["descr"]["price"])
-                self.balances[asset_quote]["unencumbered"] -= amt_c2
+                amt_quote = vol * float(order["descr"]["price"])
+                self.balances[asset_quote]["unencumbered"] -= amt_quote
                 self.logger.debug(
                     "Encumbering quote for BUY %10.3f %s for %s",
-                    amt_c2,
+                    amt_quote,
                     asset_quote,
                     pair,
                 )
@@ -243,34 +243,34 @@ class Bot:
         market: Dict[str, Any],
     ):
         pair = self.real_pair(market["pair"])
-        c1 = self.asset_pairs[pair]["base"]
-        c2 = self.asset_pairs[pair]["quote"]
+        c_base = self.asset_pairs[pair]["base"]
+        c_quote = self.asset_pairs[pair]["quote"]
 
-        quantity_c1 = float(order["volume"])
-        open_price_c2 = float(order["price"])
-        open_cost = quantity_c1 * open_price_c2
+        quantity_base = float(order["volume"])
+        open_price_quote = float(order["price"])
+        open_cost = quantity_base * open_price_quote
         open_fee = open_cost * self.fee_percent / 100.0
 
         self.logger.info(
-            "Open  Trade: %4s %7.4f %4s for %7.2f %4s (%8.3f %s/%s) fee %6.3f "
+            "Open  Trade: %4s %9.4f %4s for %7.2f %4s (%8.3f %s/%s) fee %6.3f "
             "%4s",
             order["type"],
-            quantity_c1,
-            c1,
+            quantity_base,
+            c_base,
             open_cost,
-            c2,
-            open_price_c2,
-            c2,
-            c1,
+            c_quote,
+            open_price_quote,
+            c_quote,
+            c_base,
             open_fee,
-            c2,
+            c_quote,
         )
 
         if "close" not in order:
             return
 
-        close_price_c2 = float(order["close"]["price"])
-        close_cost = quantity_c1 * close_price_c2
+        close_price_quote = float(order["close"]["price"])
+        close_cost = quantity_base * close_price_quote
         close_fee = close_cost * self.fee_percent / 100.0
         gross_profit = close_cost - open_cost
         if order["type"] == "sell":
@@ -285,17 +285,17 @@ class Bot:
             order["close"]["type"],
             " " * 14,
             close_cost,
-            c2,
-            close_price_c2,
-            c2,
-            c1,
+            c_quote,
+            close_price_quote,
+            c_quote,
+            c_base,
             close_fee,
-            c2,
+            c_quote,
             gross_profit,
-            c2,
+            c_quote,
             gross_profit * 100.0 / close_cost,
             net_profit,
-            c2,
+            c_quote,
             net_profit * 100.0 / open_cost,
             percent_fee,
         )
@@ -331,15 +331,24 @@ class Bot:
             return 0
 
         pair = self.real_pair(market["pair"])
-        c1 = self.asset_pairs[pair]["base"]
+        asset_pair = self.asset_pairs[pair]
+        c_base = asset_pair["base"]
+        dp_base = asset_pair["lot_decimals"]
+        dp_quote = asset_pair["pair_decimals"]
 
         self.logger.info("--- Sell %s ---", pair)
-        bal = self.balances[c1]["unencumbered"]
+        bal = self.balances[c_base]["unencumbered"]
+        if bal < 0.001:
+            raise Exception(
+                f"{pair}: Not enough unencumbered {c_base} to place SELL "
+                f"orders: {bal} < 0.001"
+            )
+
         self.logger.info(
             "Balance: %10.3f (%10.3f unencumbered) %s",
-            self.balances[c1]["total"],
+            self.balances[c_base]["total"],
             bal,
-            c1,
+            c_base,
         )
         vol_total = sum(math.sqrt(i) for i in range(1, sell_order_count + 1))
         vol_p = market["sell"]["vol_percent"]
@@ -350,27 +359,25 @@ class Bot:
             sell_order_count,
             vol_total,
             bal,
-            c1,
+            c_base,
             vol_p,
             vol_mul,
         )
         base_price = max(ticker.ask, ticker.vwap, ticker.high)
-        orders: List[Dict[str, str]] = []
+        orders: List[Dict[str, Union[str, Dict[str, str]]]] = []
         for n in range(1, sell_order_count + 1):
             pcnt_bump_sell = (
                 market["sell"]["pcnt_bump_a"] * n**2
                 + market["sell"]["pcnt_bump_c"]
             )
-            p_sell = round(
-                base_price * (1 + pcnt_bump_sell / 100), market["dp_quote"]
-            )
+            p_sell = round(base_price * (1 + pcnt_bump_sell / 100), dp_quote)
             p_buy = round(
                 p_sell * (1.0 - market["sell"]["rebuy_bump_percent"] / 100.0),
-                market["dp_quote"],
+                dp_quote,
             )
 
-            vol_sell = round(vol_mul * math.sqrt(n), market["dp_base"])
-            order: Dict[str, str] = {
+            vol_sell = round(vol_mul * math.sqrt(n), dp_base)
+            order: Dict[str, Union[str, Dict[str, str]]] = {
                 # https://www.kraken.com/en-gb/features/api#add-standard-order
                 # "userref": 0,  # int32
                 "ordertype": "limit",
@@ -409,55 +416,56 @@ class Bot:
             return 0
 
         pair = self.real_pair(market["pair"])
-        c1 = self.asset_pairs[pair]["base"]
-        c2 = self.asset_pairs[pair]["quote"]
+        asset_pair = self.asset_pairs[pair]
+        c_base = asset_pair["base"]
+        c_quote = asset_pair["quote"]
+        dp_base = asset_pair["lot_decimals"]
+        dp_quote = asset_pair["pair_decimals"]
 
         self.logger.info("--- Buy %s ---", pair)
-        bal = self.balances[c2]["unencumbered"]
+        bal = self.balances[c_quote]["unencumbered"]
         self.logger.info(
             "Balance: %10.3f (%10.3f unencumbered) %s",
-            self.balances[c2]["total"],
+            self.balances[c_quote]["total"],
             bal,
-            c2,
+            c_quote,
         )
-        amt_c2 = market["buy"]["amount"]
-        if amt_c2 > bal:
+        amt_quote = market["buy"]["amount"]
+        if amt_quote > bal:
             raise Exception(
-                f"{pair}: Not enough unencumbered {c2} to place BUY orders: "
-                f"{amt_c2} > {bal}"
+                f"{pair}: Not enough unencumbered {c_quote} to place BUY "
+                f"orders: {amt_quote} > {bal}"
             )
         vol_total = sum(math.sqrt(i) for i in range(1, buy_order_count + 1))
-        amt_c1 = amt_c2 / ticker.bid
-        vol_mul = amt_c1 / vol_total
+        amt_base = amt_quote / ticker.bid
+        vol_mul = amt_base / vol_total
         self.logger.info(
-            "Buy: order_count=%d, vol_total=%f, amount_c2=%f %s, "
-            "amount_c1=%f %s, vol_mul=%f",
+            "Buy: order_count=%d, vol_total=%f, amount_quote=%f %s, "
+            "amount_base=%f %s, vol_mul=%f",
             buy_order_count,
             vol_total,
-            amt_c2,
-            c2,
-            amt_c1,
-            c1,
+            amt_quote,
+            c_quote,
+            amt_base,
+            c_base,
             vol_mul,
         )
         base_price = min(ticker.bid, ticker.vwap, ticker.low)
-        orders: List[Dict[str, str]] = []
+        orders: List[Dict[str, Union[str, Dict[str, str]]]] = []
         for n in range(1, buy_order_count + 1):
             pcnt_bump_buy = (
                 market["buy"]["pcnt_bump_a"] * n**2
                 + market["buy"]["pcnt_bump_c"]
             )
-            p_buy = round(
-                base_price * (1 - pcnt_bump_buy / 100), market["dp_quote"]
-            )
+            p_buy = round(base_price * (1 - pcnt_bump_buy / 100), dp_quote)
             p_sell = round(
                 p_buy * (1.0 + market["buy"]["resell_bump_percent"] / 100.0),
-                market["dp_quote"],
+                dp_quote,
             )
 
-            vol_buy = round(vol_mul * math.sqrt(n), market["dp_base"])
+            vol_buy = round(vol_mul * math.sqrt(n), dp_base)
 
-            order: Dict[str, str] = {
+            order: Dict[str, Union[str, Dict[str, str]]] = {
                 # https://www.kraken.com/en-gb/features/api#add-standard-order
                 # "userref": 0,  # int32
                 "ordertype": "limit",
@@ -486,22 +494,29 @@ class Bot:
         count = self.place_orders(pair, orders)
         return count
 
-    def place_orders(self, pair: str, orders: List[Dict[str, str]]) -> int:
+    def place_orders(
+        self,
+        pair: str,
+        orders: List[Dict[str, Union[str, Dict[str, str]]]],
+    ) -> int:
         if len(orders) == 1:
             # AddOrderBatch not possible
-            req = orders[0]
-            req["pair"] = pair
-            req["validate"] = VALIDATE
-            result = self._query_private("AddOrder", data=req)
+            orders[0]["pair"] = pair
+            orders[0]["validate"] = VALIDATE
+            result = self._query_private("AddOrder", data=orders[0])
+            if VALIDATE == "false":
+                ids = ", ".join(result["txid"])
+            else:
+                ids = "N/A (validate only)"
             self.logger.info(
                 "Placed %s order. ID: %s",
-                req["type"].upper(),
-                ", ".join(result["txid"]) if "txid" in result else "N/A",
+                orders[0]["type"],
+                ids,
             )
             return 1
 
         # Use AddOrderBatch
-        req = {
+        req: Dict[str, Any] = {
             # "deadline": "",
             "orders": orders,
             "pair": pair,
@@ -510,16 +525,22 @@ class Bot:
         expected = len(orders)
         result = self._query_private("AddOrderBatch", data=req)
         count = len(result["orders"])
-        types = ",".join(sorted(set([i["type"].upper() for i in orders])))
+        types = ",".join(sorted(set([i["type"] for i in orders])))
+        errors = [itm["error"] for itm in result["orders"] if "error" in itm]
+        if len(errors) > 0:
+            raise Exception(
+                f"Errors placing batch {types} orders: " + ", ".join(errors)
+            )
+        if VALIDATE == "false":
+            ids = ", ".join(item["txid"] for item in result["orders"])
+        else:
+            ids = "N/A (validate only)"
         self.logger.info(
             "Placed %d/%d BATCH %s orders. IDs: %s",
             count,
             expected,
             types,
-            ", ".join(
-                item["txid"] if "txid" in item else "N/A"
-                for item in result["orders"]
-            ),
+            ids,
         )
         if count < expected:
             self.logger.warning(

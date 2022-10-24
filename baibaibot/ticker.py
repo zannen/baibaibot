@@ -46,8 +46,8 @@ class Ticker:
         ask, bid, opn, hig, low = "Ask", "Bid", "Open", "High", "Low"
         clo, vwa, cnt, vol = "Close", "VWAP", "Count", "Volume"
         return (
-            f"{ask:8s}, {bid:8s}, {opn:8s}, {hig:8s}, {low:8s}, {clo:8s}, "
-            + f"{vwa:8s}, {cnt:8s}, {vol:9s}"
+            f"{ask:>8s}, {bid:>8s}, {opn:>8s}, {hig:>8s}, {low:>8s}, "
+            + f"{clo:>8s}, {vwa:>8s}, {cnt:>8s}, {vol:>9s}"
         )
 
     def info(self) -> str:

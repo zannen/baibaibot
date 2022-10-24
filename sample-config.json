@@ -5,8 +5,6 @@
     "inter_apireq_sleep_seconds": 0.1,
     "markets": [
         {
-            "dp_base": 6,
-            "dp_quote": 6,
             "pair": "XXLMZEUR",
             "sell": {
                 "order_count": 3,
