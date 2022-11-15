@@ -252,7 +252,7 @@ class Bot:
         open_fee = open_cost * self.fee_percent / 100.0
 
         self.logger.info(
-            "Open  Trade: %4s %9.4f %4s for %7.2f %4s (%8.3f %s/%s) fee %6.3f "
+            "Open  Trade: %4s %9.4f %5s for %7.2f %4s (%8.3f %s/%s) fee %6.3f "
             "%4s",
             order["type"],
             quantity_base,
@@ -283,7 +283,7 @@ class Bot:
             "Gross profit %6.2f %4s (%5.2f%%) Net profit %6.2f %4s (%5.2f%%) "
             "Fee as percentage of profit %5.2f%%)",
             order["close"]["type"],
-            " " * 14,
+            " " * 15,
             close_cost,
             c_quote,
             close_price_quote,
@@ -337,28 +337,29 @@ class Bot:
         dp_quote = asset_pair["pair_decimals"]
 
         self.logger.info("--- Sell %s ---", pair)
-        bal = self.balances[c_base]["unencumbered"]
-        if bal < 0.001:
+        bal_base = self.balances[c_base]["unencumbered"]
+        if bal_base < 0.001:
             raise Exception(
                 f"{pair}: Not enough unencumbered {c_base} to place SELL "
-                f"orders: {bal} < 0.001"
+                f"orders: {bal_base} < 0.001"
             )
 
         self.logger.info(
-            "Balance: %10.3f (%10.3f unencumbered) %s",
+            "Balance: %10.3f %s, %10.3f %s unencumbered",
             self.balances[c_base]["total"],
-            bal,
+            c_base,
+            bal_base,
             c_base,
         )
         vol_total = sum(math.sqrt(i) for i in range(1, sell_order_count + 1))
         vol_p = market["sell"]["vol_percent"]
-        vol_mul = bal / vol_total * vol_p / 100.0
+        vol_mul = bal_base / vol_total * vol_p / 100.0
         self.logger.info(
             "Sell: order_count=%d, vol_total=%f, bal=%f %s, vol_percent=%f, "
             "vol_mul=%f",
             sell_order_count,
             vol_total,
-            bal,
+            bal_base,
             c_base,
             vol_p,
             vol_mul,
@@ -423,30 +424,29 @@ class Bot:
         dp_quote = asset_pair["pair_decimals"]
 
         self.logger.info("--- Buy %s ---", pair)
-        bal = self.balances[c_quote]["unencumbered"]
+        bal_quote = self.balances[c_quote]["unencumbered"]
+        bal_base = bal_quote / ticker.bid
         self.logger.info(
-            "Balance: %10.3f (%10.3f unencumbered) %s",
+            "Balance: %10.3f %s, %10.3f %s (approx %10.3f %s) unencumbered",
             self.balances[c_quote]["total"],
-            bal,
             c_quote,
+            bal_quote,
+            c_quote,
+            bal_base,
+            c_base,
         )
-        amt_quote = market["buy"]["amount"]
-        if amt_quote > bal:
-            raise Exception(
-                f"{pair}: Not enough unencumbered {c_quote} to place BUY "
-                f"orders: {amt_quote} > {bal}"
-            )
         vol_total = sum(math.sqrt(i) for i in range(1, buy_order_count + 1))
-        amt_base = amt_quote / ticker.bid
-        vol_mul = amt_base / vol_total
+        vol_p = market["buy"]["vol_percent"]
+        vol_mul = bal_base / vol_total * vol_p / 100.0
+
         self.logger.info(
             "Buy: order_count=%d, vol_total=%f, amount_quote=%f %s, "
             "amount_base=%f %s, vol_mul=%f",
             buy_order_count,
             vol_total,
-            amt_quote,
+            bal_quote,
             c_quote,
-            amt_base,
+            bal_base,
             c_base,
             vol_mul,
         )

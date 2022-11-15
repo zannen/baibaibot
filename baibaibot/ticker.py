@@ -46,8 +46,8 @@ class Ticker:
         ask, bid, opn, hig, low = "Ask", "Bid", "Open", "High", "Low"
         clo, vwa, cnt, vol = "Close", "VWAP", "Count", "Volume"
         return (
-            f"{ask:>8s}, {bid:>8s}, {opn:>8s}, {hig:>8s}, {low:>8s}, "
-            + f"{clo:>8s}, {vwa:>8s}, {cnt:>8s}, {vol:>9s}"
+            f"{ask:>9s}, {bid:>9s}, {opn:>9s}, {hig:>9s}, {low:>9s}, "
+            + f"{clo:>9s}, {vwa:>9s}, {cnt:>9s}, {vol:>10s}"
         )
 
     def info(self) -> str:
@@ -55,7 +55,7 @@ class Ticker:
         Return a nicely formatted information line.
         """
         return (
-            f"{self.ask:8.3f}, {self.bid:8.3f}, {self.open:8.3f}, "
-            + f"{self.high:8.3f}, {self.low:8.3f}, {self.close:8.3f}, "
-            + f"{self.vwap:8.3f}, {self.count:8d}, {self.vol:9.2f}"
+            f"{self.ask:9.3f}, {self.bid:9.3f}, {self.open:9.3f}, "
+            + f"{self.high:9.3f}, {self.low:9.3f}, {self.close:9.3f}, "
+            + f"{self.vwap:9.3f}, {self.count:9d}, {self.vol:10.2f}"
         )

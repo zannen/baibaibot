@@ -18,7 +18,7 @@
                 "pcnt_bump_a": 0.25,
                 "pcnt_bump_c": 0.5,
                 "resell_bump_percent": 3.0,
-                "amount": 1000
+                "vol_percent": 50.0
             },
             "min": {
                 "ask": 0.01,
