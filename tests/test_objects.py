@@ -19,9 +19,13 @@ def test_asset_pair_gateio():
             trade_status="untradable",
         )
     ]
-    pair_id = "100X_USDT"
     pair = AssetPair.from_gateio(response[0])
     assert pair.exchange == "gate.io"
+    assert pair.id == "100X_USDT"
+    assert pair.base == "100X"
+    assert pair.quote == "USDT"
+    assert pair.dp_base == 0
+    assert pair.dp_quote == 11
 
 
 def test_asset_pair_kraken():
@@ -58,3 +62,8 @@ def test_asset_pair_kraken():
     pair_id = "1INCHEUR"
     pair = AssetPair.from_kraken(pair_id, response[pair_id])
     assert pair.exchange == "Kraken"
+    assert pair.id == "1INCHEUR"
+    assert pair.base == "1INCH"
+    assert pair.quote == "ZEUR"
+    assert pair.dp_base == 8
+    assert pair.dp_quote == 3

@@ -95,7 +95,7 @@ class KrakenAPI(API):
         )
         params = {
             "pair": pair,
-            "interval": int(self.cfg["order_lifespan_seconds"] / 60),  # minutes
+            "interval": int(self.cfg["order_lifespan_seconds"] / 60),  # mins
             "since": int(since.timestamp()),
         }
         r = self._query_public("OHLC", params)
