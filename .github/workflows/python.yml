@@ -27,7 +27,7 @@ jobs:
       - name: Install packages
         run: |
           sudo apt update
-          sudo env DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends python3-pip python3-virtualenv pipenv
+          sudo env DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends python3-pip python3-virtualenv
 
       - name: Lint with flake8
         run: |
@@ -80,6 +80,7 @@ jobs:
           venv="$tmpdir/venv"
           virtualenv "$venv"
           source "$venv/bin/activate"
+          pip install -r requirements.txt
           pip install pytest
           pip install -e .
           pytest
@@ -90,6 +91,7 @@ jobs:
           venv="$tmpdir/venv"
           virtualenv "$venv"
           source "$venv/bin/activate"
+          pip install -r requirements.txt
           pip install coverage pytest
           pip install -e .
           coverage run -m pytest
