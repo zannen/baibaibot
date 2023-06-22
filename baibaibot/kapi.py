@@ -197,7 +197,7 @@ class KAPI:
             self.uri + urlpath, api_post.encode("utf8")
         )
         api_request.add_header("API-Key", self.key)
-        api_request.add_header("API-Sign", api_signature)
+        api_request.add_header("API-Sign", api_signature.decode("utf-8"))
         api_request.add_header("User-Agent", self.user_agent)
         api_response = urllib.request.urlopen(api_request).read().decode()
         return json.loads(api_response)
