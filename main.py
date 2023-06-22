@@ -11,14 +11,14 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument("--configfile", help="", required=True)
 
-    parser.add_argument("--keyfile", help="", required=True)
+    parser.add_argument("--keysfile", help="", required=True)
 
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    bot = Bot(args.configfile, args.keyfile)
+    bot = Bot(args.configfile, args.keysfile)
     bot.loop()
 
 
