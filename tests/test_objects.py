@@ -1,3 +1,7 @@
+"""
+Test objects
+"""
+
 import gate_api
 
 from baibaibot.objects import AssetPair

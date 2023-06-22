@@ -12,7 +12,7 @@ from .ticker import Ticker
 
 
 class GateIOAPI(API):
-    gate: Optional[Any] = None  # TODO
+    gate: Optional[gate_api.SpotApi] = None
 
     def __init__(self, key="", secret="", logger=None):
         self.key = key
@@ -104,8 +104,7 @@ class GateIOAPI(API):
         if self.gate is None:
             raise NotConnectedError()
         results = self.gate.list_tickers(currency_pair=pair)[0]
-        ticker = Ticker()
-        ticker.from_gateio(results)
+        ticker = Ticker.from_gateio(results)
         quote = self.asset_pairs[pair].quote
         hdr = ticker.header()
         inf = ticker.info()

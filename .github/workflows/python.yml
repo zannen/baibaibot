@@ -72,7 +72,7 @@ jobs:
           virtualenv "$venv"
           source "$venv/bin/activate"
           pip install pylint
-          ./pylint.sh
+          ./.pylint.sh
 
       - name: Tests
         run: |

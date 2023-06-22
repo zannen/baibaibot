@@ -16,7 +16,7 @@ VALIDATE = "true"
 
 
 class KrakenAPI(API):
-    krak: Optional[Any] = None  # TODO
+    krak: Optional[KAPI] = None
 
     inter_apireq_sleep_seconds = 0.0
     order_lifespan_seconds = 0.0
@@ -162,8 +162,7 @@ class KrakenAPI(API):
 
     def get_ticker(self, pair: str) -> Ticker:
         results = self._query_public("Ticker", {"pair": pair})
-        ticker = Ticker()
-        ticker.from_kraken(results[pair])
+        ticker = Ticker.from_kraken(results[pair])
         quote = self.asset_pairs[pair].quote
         hdr = ticker.header()
         inf = ticker.info()
