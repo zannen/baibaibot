@@ -6,6 +6,7 @@ import time
 from typing import Any, Dict, List, Optional, Union
 
 from .api import API
+from .errors import NotConnectedError
 from .kapi import KAPI
 from .objects import AssetPair
 from .ohlc import OHLC
@@ -18,6 +19,7 @@ class KrakenAPI(API):
     krak: Optional[Any] = None  # TODO
 
     inter_apireq_sleep_seconds = 0.0
+    order_lifespan_seconds = 0.0
 
     def __init__(self, key="", secret="", logger=None):
         self.key = key
@@ -61,9 +63,13 @@ class KrakenAPI(API):
         raise Exception("Query failed: " + json.dumps(reply, sort_keys=True))
 
     def _query_private(self, query: str, *args, **kwargs):
+        if self.krak is None:
+            raise NotConnectedError()
         return self._query(self.krak.query_private, query, *args, **kwargs)
 
     def _query_public(self, query: str, *args, **kwargs):
+        if self.krak is None:
+            raise NotConnectedError()
         return self._query(self.krak.query_public, query, *args, **kwargs)
 
     def get_asset_pairs(self) -> None:
@@ -84,17 +90,19 @@ class KrakenAPI(API):
 
     def get_ohlc(self, pair: str) -> OHLC:
         since = datetime.datetime.utcnow()
-        since -= datetime.timedelta(seconds=self.order_lifespan_seconds * 2)
+        since -= datetime.timedelta(
+            seconds=self.cfg["order_lifespan_seconds"] * 2
+        )
         params = {
             "pair": pair,
-            "interval": int(self.order_lifespan_seconds / 60),  # minutes
+            "interval": int(self.cfg["order_lifespan_seconds"] / 60),  # minutes
             "since": int(since.timestamp()),
         }
         r = self._query_public("OHLC", params)
         ohlc = (OHLC(r[pair][0]), OHLC(r[pair][1]))
         result = ohlc[0].merge(ohlc[1])
 
-        quote = self.asset_pairs[pair]["quote"]
+        quote = self.asset_pairs[pair].quote
         hdr = result.header()
         inf = result.info()
         self.logger.info("OHLC for %s (in %s): %s", pair, quote, hdr)
@@ -105,7 +113,7 @@ class KrakenAPI(API):
         oo: Dict[str, Dict[str, Any]] = {}
         oo = self._query_private("OpenOrders")["open"]
         self.logger.info("Open orders: %d", len(oo))
-        open_orders = {}
+        open_orders: Dict[str, List[Dict[str, Any]]] = {}
         for orderref, order in oo.items():
             order["_id"] = orderref
             pair = order["descr"]["pair"]
@@ -325,10 +333,10 @@ class KrakenAPI(API):
 
         pair = self.real_pair(market["pair"])
         asset_pair = self.asset_pairs[pair]
-        c_base = asset_pair["base"]
-        c_quote = asset_pair["quote"]
-        dp_base = asset_pair["lot_decimals"]
-        dp_quote = asset_pair["pair_decimals"]
+        c_base = asset_pair.base
+        c_quote = asset_pair.quote
+        dp_base = asset_pair.dp_base
+        dp_quote = asset_pair.dp_quote
 
         self.logger.info("--- Buy %s ---", pair)
         bal_quote = self.balances[c_quote]["unencumbered"]
@@ -432,7 +440,7 @@ class KrakenAPI(API):
         expected = len(orders)
         result = self._query_private("AddOrderBatch", data=req)
         count = len(result["orders"])
-        types = ",".join(sorted(set([i["type"] for i in orders])))
+        types = ",".join(sorted(set([str(i["type"]) for i in orders])))
         errors = [itm["error"] for itm in result["orders"] if "error" in itm]
         if len(errors) > 0:
             raise Exception(

@@ -62,8 +62,8 @@ jobs:
           venv="$tmpdir/venv"
           virtualenv "$venv"
           source "$venv/bin/activate"
-          pip install mypy
-          mypy algorithms/
+          pip install mypy types-requests
+          mypy baibaibot/ tests/ *.py
 
       - name: Lint with pylint 
         run: |

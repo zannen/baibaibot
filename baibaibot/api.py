@@ -1,17 +1,17 @@
+import logging
 import os
 import traceback
 from typing import Any, Dict
 
+from .errors import SubclassError
 from .objects import AssetPair
 from .ticker import Ticker
 
 
-class SubclassError(Exception):
-    def __init__(self, message):
-        super().__init__("to be implemented in a subclass")
-
-
 class API:
+    cfg: Dict[str, Any] = {}
+    logger: logging.Logger
+
     # asset_pair ID or altname -> asset_pair dict
     asset_pairs: Dict[str, AssetPair] = {}
 
@@ -25,6 +25,9 @@ class API:
         raise SubclassError()
 
     def get_open_orders(self) -> None:
+        raise SubclassError()
+
+    def get_ticker(self, pair: str) -> Ticker:
         raise SubclassError()
 
     def print_all_balances(self):

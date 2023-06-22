@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional
 import gate_api
 
 from .api import API
+from .errors import NotConnectedError
 from .objects import AssetPair
 from .ticker import Ticker
 
@@ -33,6 +34,8 @@ class GateIOAPI(API):
         self.gate = gate_api.SpotApi(cli)
 
     def get_asset_pairs(self) -> None:
+        if self.gate is None:
+            raise NotConnectedError()
         self.asset_pairs = {}
         pairs = self.gate.list_currency_pairs()
         for pair in pairs:
@@ -46,6 +49,8 @@ class GateIOAPI(API):
             )
 
     def get_balances(self) -> None:
+        if self.gate is None:
+            raise NotConnectedError()
         self.balances = {
             acc.currency: {
                 "total": float(acc.available) - float(acc.locked),
@@ -55,7 +60,9 @@ class GateIOAPI(API):
         }
 
     def get_open_orders(self) -> None:
-        open_orders = {}
+        if self.gate is None:
+            raise NotConnectedError()
+        open_orders: Dict[str, gate_api.Order] = {}
         for market in self.cfg["markets"]:
             open_orders[market["pair"]] = []
             for order in self.gate.list_orders(market["pair"], "open"):
@@ -94,6 +101,8 @@ class GateIOAPI(API):
                 )
 
     def get_ticker(self, pair: str) -> Ticker:
+        if self.gate is None:
+            raise NotConnectedError()
         results = self.gate.list_tickers(currency_pair=pair)[0]
         ticker = Ticker()
         ticker.from_gateio(results)

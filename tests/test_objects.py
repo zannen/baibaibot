@@ -7,21 +7,22 @@ def test_asset_pair_gateio():
     response = [
         gate_api.CurrencyPair(
             amount_precision=0,
-            base='100X',
+            base="100X",
             buy_start=1622793600,
-            fee='0.2',
-            id='100X_USDT',
+            fee="0.2",
+            id="100X_USDT",
             min_base_amount=None,
-            min_quote_amount='1',
+            min_quote_amount="1",
             precision=11,
-            quote='USDT',
+            quote="USDT",
             sell_start=1608782400,
-            trade_status='untradable',
+            trade_status="untradable",
         )
     ]
     pair_id = "100X_USDT"
     pair = AssetPair.from_gateio(response[0])
     assert pair.exchange == "gate.io"
+
 
 def test_asset_pair_kraken():
     response = {
@@ -57,4 +58,3 @@ def test_asset_pair_kraken():
     pair_id = "1INCHEUR"
     pair = AssetPair.from_kraken(pair_id, response[pair_id])
     assert pair.exchange == "Kraken"
-

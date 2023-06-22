@@ -2,16 +2,13 @@
 BaiBaiBot: A simple Kraken trading bot.
 """
 
-import datetime
 import json
 import logging
-import math
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Optional
 
 from .gateioapi import GateIOAPI
 from .krakenapi import KrakenAPI
-from .ticker import Ticker
 
 
 class Bot:

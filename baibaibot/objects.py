@@ -4,6 +4,13 @@ import gate_api
 
 
 class AssetPair:
+    exchange = "unknown"
+    id = ""
+    base = ""
+    quote = ""
+    dp_base = 0
+    dp_quote = 0
+
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
