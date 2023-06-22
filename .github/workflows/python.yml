@@ -63,15 +63,15 @@ jobs:
           virtualenv "$venv"
           source "$venv/bin/activate"
           pip install mypy types-requests
-          mypy baibaibot/ tests/ *.py
+          mypy --ignore-missing-imports .
 
-      - name: Lint with pylint 
+      - name: Lint with pylint
         run: |
-          tmpdir="$(mktemp -d)" 
-          venv="$tmpdir/venv" 
-          virtualenv "$venv" 
-          source "$venv/bin/activate" 
-          pip install pylint 
+          tmpdir="$(mktemp -d)"
+          venv="$tmpdir/venv"
+          virtualenv "$venv"
+          source "$venv/bin/activate"
+          pip install pylint
           ./pylint.sh
 
       - name: Tests
