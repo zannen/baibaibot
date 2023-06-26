@@ -4,10 +4,10 @@ Test objects
 
 import gate_api
 
-from baibaibot.objects import AssetPair
+from baibaibot.objects import AssetPair, KrakenOrder, Order
 
 
-def test_asset_pair_gateio():
+def test_asset_pair_gateio() -> None:
     response = [
         gate_api.CurrencyPair(
             amount_precision=0,
@@ -32,7 +32,7 @@ def test_asset_pair_gateio():
     assert pair.dp_quote == 11
 
 
-def test_asset_pair_kraken():
+def test_asset_pair_kraken() -> None:
     response = {
         "1INCHEUR": {
             "altname": "1INCHEUR",
@@ -71,3 +71,43 @@ def test_asset_pair_kraken():
     assert pair.quote == "ZEUR"
     assert pair.dp_base == 8
     assert pair.dp_quote == 3
+
+
+def test_order_kraken() -> None:
+    order = Order(
+        expire="+900",
+        ordertype="limit",
+        price=12.34,
+        side="buy",
+        tif="GTD",
+        volume=1234.5,
+        close={
+            "price": 12.56,
+            "side": "sell",
+        },
+    )
+    apiorder = order.to_kraken()
+    expected: KrakenOrder = {
+        # https://www.kraken.com/en-gb/features/api#add-standard-order
+        # "userref": 0,  # int32
+        "ordertype": "limit",
+        "type": "buy",
+        "volume": "1234.5",
+        # "displayvol": "",
+        "price": "12.34",
+        # "price2": "",
+        # "trigger": "",
+        # "leverage": "",
+        "stptype": "cancel-newest",
+        "oflags": "fciq",
+        "timeinforce": "GTD",
+        "starttm": "0",  # now
+        "expiretm": "+900",
+        "close": {
+            "ordertype": "limit",
+            "type": "sell",
+            "price": "12.56",
+            # "price2": "",
+        },
+    }
+    assert apiorder == expected

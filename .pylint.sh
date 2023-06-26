@@ -13,9 +13,9 @@ usages="$(jq --arg x usage "$jqcmd" .pylint.json)"
 
 max_fatal=0
 max_error=0
-max_warning=20
-max_refactor=20
-max_convention=60
+max_warning=10
+max_refactor=10
+max_convention=10
 max_usage=0
 
 pylint --exit-zero --persistent=no baibaibot/ tests/ *.py

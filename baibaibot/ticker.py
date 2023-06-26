@@ -18,8 +18,8 @@ class Ticker:
     low = 0.0
 
     def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+        for key, val in kwargs.items():
+            setattr(self, key, val)
 
     @classmethod
     def from_gateio(cls, tick: gate_api.Ticker) -> "Ticker":

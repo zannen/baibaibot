@@ -23,6 +23,7 @@ import hmac
 import json
 import time
 import urllib.request
+from typing import Any, Dict, Optional
 
 import requests
 
@@ -69,7 +70,6 @@ class KAPI:
         self.session.headers.update({"User-Agent": self.user_agent})
         self.response = None
         self._json_options = {}
-        return
 
     def json_options(self, **kwargs):
         """Set keyword arguments to be passed to JSON deserialization.
@@ -88,7 +88,6 @@ class KAPI:
 
         """
         self.session.close()
-        return
 
     def load_key(self, path):
         """Load key and secret from file.
@@ -103,7 +102,6 @@ class KAPI:
         with open(path, "r", encoding="utf-8") as f:
             self.key = f.readline().strip()
             self.secret = f.readline().strip()
-        return
 
     def _query(self, urlpath, data, headers=None, timeout=None):
         """Low-level query handling.
@@ -166,7 +164,12 @@ class KAPI:
 
         return self._query(urlpath, data, timeout=timeout)
 
-    def query_private(self, method: str, data: dict = {}, timeout=None):
+    def query_private(
+        self,
+        method: str,
+        data: Optional[Dict[str, Any]] = None,
+        timeout=None,
+    ):
         """
         Perform an API query that requires a valid key/secret pair.
         """
@@ -174,6 +177,9 @@ class KAPI:
             raise Exception(
                 "Either key or secret is not set! (Use `load_key()`."
             )
+
+        if data is None:
+            data = {}
 
         data["nonce"] = str(int(1000 * time.time()))
 

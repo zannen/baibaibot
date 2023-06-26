@@ -4,7 +4,9 @@ BaiBaiBot: A simple Kraken trading bot.
 
 import json
 import logging
+import os
 import time
+import traceback
 from typing import Optional
 
 from .gateioapi import GateIOAPI
@@ -58,6 +60,9 @@ class Bot:
             else:
                 raise Exception(f"Unknown exchange {exchange}")
 
+    def cancel_orders(self) -> None:
+        self.exch_fn("cancel_orders")
+
     def connect(self) -> None:
         self.exch_fn("connect")
 
@@ -86,13 +91,23 @@ class Bot:
 
     def loop(self):
         while True:
-            self.load_config()
-            self.get_balances()
-            self.get_open_orders()
-            self.tick()
-            # self.get_balances()
-            # self.get_open_orders()
-            self.print_all_balances()
+            try:
+                self.load_config()
+                self.cancel_orders()
+                self.get_balances()
+                self.print_all_balances()
+                self.get_open_orders()
+                self.tick()
+                self.get_balances()
+                self.get_open_orders()
+                self.get_balances()
+                self.print_all_balances()
+            except Exception:
+                self.logger.warning(
+                    "Caught exception while looping.%s%s",
+                    os.linesep,
+                    traceback.format_exc(),
+                )
 
             sleep_time = max(
                 cfg["order_lifespan_seconds"]
