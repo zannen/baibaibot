@@ -94,13 +94,15 @@ class Bot:
             try:
                 self.load_config()
                 self.cancel_orders()
+
                 self.get_balances()
+                self.get_open_orders()
                 self.print_all_balances()
-                self.get_open_orders()
+
                 self.tick()
+
                 self.get_balances()
                 self.get_open_orders()
-                self.get_balances()
                 self.print_all_balances()
             except Exception:
                 self.logger.warning(
