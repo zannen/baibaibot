@@ -23,6 +23,7 @@ import hmac
 import json
 import time
 import urllib.request
+from typing import Any, Dict, Optional
 
 import requests
 
@@ -69,7 +70,6 @@ class KAPI:
         self.session.headers.update({"User-Agent": self.user_agent})
         self.response = None
         self._json_options = {}
-        return
 
     def json_options(self, **kwargs):
         """Set keyword arguments to be passed to JSON deserialization.
@@ -88,7 +88,6 @@ class KAPI:
 
         """
         self.session.close()
-        return
 
     def load_key(self, path):
         """Load key and secret from file.
@@ -100,10 +99,9 @@ class KAPI:
         :returns: None
 
         """
-        with open(path, "r") as f:
+        with open(path, "r", encoding="utf-8") as f:
             self.key = f.readline().strip()
             self.secret = f.readline().strip()
-        return
 
     def _query(self, urlpath, data, headers=None, timeout=None):
         """Low-level query handling.
@@ -118,12 +116,12 @@ class KAPI:
         :type data: dict
         :param headers: (optional) HTTPS headers
         :type headers: dict
-        :param timeout: (optional) if not ``None``, a :py:exc:`requests.HTTPError`
+        :param timeout: (optional) if not ``None``, a `requests.HTTPError`
                         will be thrown after ``timeout`` seconds if a response
                         has not been received
         :type timeout: int or float
         :returns: :py:meth:`requests.Response.json`-deserialised Python object
-        :raises: :py:exc:`requests.HTTPError`: if response status not successful
+        :raises: `requests.HTTPError`: if response status not successful
 
         """
         if data is None:
@@ -152,7 +150,7 @@ class KAPI:
         :type method: str
         :param data: (optional) API request parameters
         :type data: dict
-        :param timeout: (optional) if not ``None``, a :py:exc:`requests.HTTPError`
+        :param timeout: (optional) if not ``None``, a `requests.HTTPError`
                         will be thrown after ``timeout`` seconds if a response
                         has not been received
         :type timeout: int or float
@@ -166,7 +164,12 @@ class KAPI:
 
         return self._query(urlpath, data, timeout=timeout)
 
-    def query_private(self, method: str, data: dict = {}, timeout=None):
+    def query_private(
+        self,
+        method: str,
+        data: Optional[Dict[str, Any]] = None,
+        timeout=None,
+    ):
         """
         Perform an API query that requires a valid key/secret pair.
         """
@@ -174,6 +177,9 @@ class KAPI:
             raise Exception(
                 "Either key or secret is not set! (Use `load_key()`."
             )
+
+        if data is None:
+            data = {}
 
         data["nonce"] = str(int(1000 * time.time()))
 
@@ -197,7 +203,7 @@ class KAPI:
             self.uri + urlpath, api_post.encode("utf8")
         )
         api_request.add_header("API-Key", self.key)
-        api_request.add_header("API-Sign", api_signature)
+        api_request.add_header("API-Sign", api_signature.decode("utf-8"))
         api_request.add_header("User-Agent", self.user_agent)
         api_response = urllib.request.urlopen(api_request).read().decode()
         return json.loads(api_response)
