@@ -1,2 +1,1 @@
-gate-api==4.45.0
 requests==2.31.0

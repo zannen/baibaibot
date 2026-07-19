@@ -1,32 +1,6 @@
 {
     "loglevel": "INFO",
     "exchanges": {
-        "gate.io": {
-            "markets": [
-                {
-                    "pair": "VEGA_USDT",
-                    "sell": {
-                        "order_count": 3,
-                        "pcnt_bump_a": 0.25,
-                        "pcnt_bump_c": 0.5,
-                        "rebuy_bump_percent": 2.5,
-                        "vol_percent": 99.0
-                    },
-                    "buy": {
-                        "order_count": 3,
-                        "pcnt_bump_a": 0.25,
-                        "pcnt_bump_c": 0.5,
-                        "resell_bump_percent": 3.0,
-                        "vol_percent": 50.0
-                    },
-                    "min": {
-                        "ask": 0.01,
-                        "bid": 0.01,
-                        "vwap": 0.01
-                    }
-                }
-            ]
-        },
         "Kraken": {
             "fee_percent": 0.12,
             "order_lifespan_seconds": 900,

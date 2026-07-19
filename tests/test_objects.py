@@ -2,34 +2,7 @@
 Test objects
 """
 
-import gate_api
-
 from baibaibot.objects import AssetPair, KrakenOrder, Order
-
-
-def test_asset_pair_gateio() -> None:
-    response = [
-        gate_api.CurrencyPair(
-            amount_precision=0,
-            base="100X",
-            buy_start=1622793600,
-            fee="0.2",
-            id="100X_USDT",
-            min_base_amount=None,
-            min_quote_amount="1",
-            precision=11,
-            quote="USDT",
-            sell_start=1608782400,
-            trade_status="untradable",
-        )
-    ]
-    pair = AssetPair.from_gateio(response[0])
-    assert pair.exchange == "gate.io"
-    assert pair.id == "100X_USDT"
-    assert pair.base == "100X"
-    assert pair.quote == "USDT"
-    assert pair.dp_base == 0
-    assert pair.dp_quote == 11
 
 
 def test_asset_pair_kraken() -> None:
