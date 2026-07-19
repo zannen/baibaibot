@@ -4,8 +4,6 @@ A class for a Ticker object.
 
 from typing import Any, Dict
 
-import gate_api
-
 
 class Ticker:
     """
@@ -20,18 +18,6 @@ class Ticker:
     def __init__(self, **kwargs):
         for key, val in kwargs.items():
             setattr(self, key, val)
-
-    @classmethod
-    def from_gateio(cls, tick: gate_api.Ticker) -> "Ticker":
-        """
-        Create a Ticker object from a gate.io API response.
-        """
-        return Ticker(
-            ask=float(tick.lowest_ask),
-            bid=float(tick.highest_bid),
-            high=float(tick.high_24h),
-            low=float(tick.low_24h),
-        )
 
     @classmethod
     def from_kraken(cls, tick: Dict[str, Any]) -> "Ticker":
