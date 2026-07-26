@@ -1,9 +1,4 @@
 {
-    "gate.io": {
-        "host": "https://api.gateio.ws/api/v4",
-        "key": "api_key",
-        "secret": "api_secret"
-    },
     "Kraken": {
         "key": "api_key",
         "secret": "api_secret"

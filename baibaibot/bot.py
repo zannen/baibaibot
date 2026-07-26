@@ -9,14 +9,12 @@ import time
 import traceback
 from typing import Optional
 
-from .gateioapi import GateIOAPI
 from .krakenapi import KrakenAPI
 
 
 class Bot:
     configfile = ""
 
-    gate: Optional[GateIOAPI] = None
     krak: Optional[KrakenAPI] = None
 
     def __init__(self, configfile: str, keysfile: str):
@@ -33,12 +31,6 @@ class Bot:
 
         self.configfile = configfile
         keys = json.load(open(keysfile, "r"))
-        if "gate.io" in keys:
-            self.gate = GateIOAPI(
-                key=keys["gate.io"]["key"],
-                secret=keys["gate.io"]["secret"],
-                # logger=self.logger,
-            )
         if "Kraken" in keys:
             self.krak = KrakenAPI(
                 key=keys["Kraken"]["key"],
@@ -51,10 +43,7 @@ class Bot:
 
     def exch_fn(self, funcname: str, *args, **kwargs) -> None:
         for exchange in sorted(self.cfg["exchanges"].keys()):
-            if exchange == "gate.io":
-                func = getattr(self.gate, funcname)
-                func(*args, **kwargs)
-            elif exchange == "Kraken":
+            if exchange == "Kraken":
                 func = getattr(self.krak, funcname)
                 func(*args, **kwargs)
             else:
@@ -80,10 +69,7 @@ class Bot:
         lvl = self.cfg["loglevel"]
         self.logger.setLevel(lvl)
         for exchange, cfg in self.cfg["exchanges"].items():
-            if exchange == "gate.io":
-                self.gate.logger.setLevel(lvl)
-                self.gate.cfg = cfg
-            elif exchange == "Kraken":
+            if exchange == "Kraken":
                 self.krak.logger.setLevel(lvl)
                 self.krak.cfg = cfg
             else:
