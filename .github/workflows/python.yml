@@ -72,6 +72,7 @@ jobs:
           virtualenv "$venv"
           source "$venv/bin/activate"
           pip install -r requirements.txt
+          pip install -r test-requirements.txt
           pip install pylint
           ./.pylint.sh
 
