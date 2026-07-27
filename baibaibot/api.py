@@ -315,7 +315,7 @@ class API:
 
 def time_ms_to_str(tim: Union[int, float]) -> str:
     return (
-        datetime.datetime.utcfromtimestamp(float(tim))
+        datetime.datetime.fromtimestamp(float(tim), datetime.timezone.utc)
         .replace(microsecond=0)
         .isoformat()
         .replace("T", " ")

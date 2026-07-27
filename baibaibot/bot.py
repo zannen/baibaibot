@@ -102,7 +102,11 @@ class Bot:
                 for cfg in self.cfg["exchanges"].values()
             )
             self.logger.info("Sleeping for %d seconds", sleep_time)
-            time.sleep(sleep_time)
+            try:
+                time.sleep(sleep_time)
+            except KeyboardInterrupt:
+                self.logger.info("Keyboard interrupt received. Exiting.")
+                break
 
     def print_all_balances(self) -> None:
         self.exch_fn("print_all_balances")
