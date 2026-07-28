@@ -212,6 +212,14 @@ class KrakenAPI(API):
             raise APIError(
                 f"Errors placing batch {",".join(sides)} orders: {errs}"
             )
+        if count < len(orders):
+            self.logger.warning(
+                "Some %s orders were not placed: %d < %d: %s",
+                ",".join(sorted(set(sides))),
+                count,
+                len(orders),
+                json.dumps(result, sort_keys=True),
+            )
         order_txids: Optional[List[str]] = []
         if not VALIDATE:
             order_txids = [item["txid"] for item in result["orders"]]
@@ -245,12 +253,4 @@ class KrakenAPI(API):
             sides_str,
             ids,
         )
-        if count < len(orders):
-            self.logger.warning(
-                "Some %s orders were not placed: %d < %d: %s",
-                sides_str,
-                count,
-                len(orders),
-                json.dumps(result, sort_keys=True),
-            )
         return count
