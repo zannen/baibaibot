@@ -24,7 +24,8 @@ class OHLC:
             if isinstance(ohlc[i + 1], (float, str)):
                 setattr(self, attrs[i], float(ohlc[i + 1]))
             else:
-                raise TypeError(f"{attrs[i]} not float/str: {type(ohlc[i+1])}")
+                typ = type(ohlc[i + 1])
+                raise TypeError(f"{attrs[i]} not float/str: {typ}")
 
         if isinstance(ohlc[7], int):
             self.count = ohlc[7]
@@ -39,7 +40,7 @@ class OHLC:
         vwa, cnt, vol = "VWAP", "Count", "Volume"
         return (
             f"{tim:20s}, {opn:8s}, {hig:8s}, {low:8s}, {clo:8s}, "
-            + f"{vwa:8s}, {cnt:8s}, {vol:9s}"
+            f"{vwa:8s}, {cnt:8s}, {vol:9s}"
         )
 
     def info(self) -> str:
@@ -49,8 +50,8 @@ class OHLC:
         tim = self.time.strftime("%Y-%m-%d %H:%M:%S")
         return (
             f"{tim:20s}, {self.open:8.3f}, {self.high:8.3f}, "
-            + f"{self.low:8.3f}, {self.close:8.3f}, {self.vwap:8.3f}, "
-            + f"{self.count:8d}, {self.vol:9.2f}"
+            f"{self.low:8.3f}, {self.close:8.3f}, {self.vwap:8.3f}, "
+            f"{self.count:8d}, {self.vol:9.2f}"
         )
 
     def merge(self, other: "OHLC") -> "OHLC":

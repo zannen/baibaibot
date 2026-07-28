@@ -199,16 +199,14 @@ class API:
         )
         base_price = ticker.high
         orders: List[Order] = []
+        msell = market["sell"]
         for n in range(1, sell_order_count + 1):
-            pcnt_bump_sell = (
-                market["sell"]["pcnt_bump_a"] * n**2
-                + market["sell"]["pcnt_bump_c"]
-            )
+            pcnt_bump_sell = msell["pcnt_bump_a"] * n**2 + msell["pcnt_bump_c"]
             p_sell = asset_pair.round_quote(
                 base_price * (1 + pcnt_bump_sell / 100)
             )
             p_buy = asset_pair.round_quote(
-                p_sell * (1.0 - market["sell"]["rebuy_bump_percent"] / 100.0)
+                p_sell * (1.0 - msell["rebuy_bump_percent"] / 100.0)
             )
 
             vol_sell = asset_pair.round_base(vol_mul * math.sqrt(n))
@@ -273,13 +271,11 @@ class API:
         )
         base_price = ticker.low
         orders: List[Order] = []
+        mbuy = market["buy"]
         for n in range(1, buy_order_count + 1):
-            pcnt_bump_buy = (
-                market["buy"]["pcnt_bump_a"] * n**2
-                + market["buy"]["pcnt_bump_c"]
-            )
+            pcnt_bump_buy = mbuy["pcnt_bump_a"] * n**2 + mbuy["pcnt_bump_c"]
             p_buy = asset_pair.round_quote(
-                base_price * (1 - pcnt_bump_buy / 100)
+                base_price * (1.0 - pcnt_bump_buy / 100.0)
             )
             if p_buy <= 0.0:
                 self.logger.warning(
@@ -289,7 +285,7 @@ class API:
                 )
                 continue
             p_sell = asset_pair.round_quote(
-                p_buy * (1.0 + market["buy"]["resell_bump_percent"] / 100.0)
+                p_buy * (1.0 + mbuy["resell_bump_percent"] / 100.0)
             )
 
             vol_buy = asset_pair.round_base(vol_mul * math.sqrt(n))

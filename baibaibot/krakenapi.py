@@ -179,12 +179,14 @@ class KrakenAPI(API):
         kraken_order["validate"] = VALIDATE
         result = self._query_private("AddOrder", data=kraken_order)
         order_txids: Optional[List[str]] = None
+        ids = "N/A (validate only)"
         if not VALIDATE:
             order_txids = [result["txid"]]
+            ids = order_txids[0]
         self.logger.info(
             "Placed %s order. ID: %s",
             order.side,
-            order_txids[0] if not VALIDATE else "N/A (validate only)",
+            ids,
         )
         return (1, order_txids, [order.side])
 
@@ -231,13 +233,13 @@ class KrakenAPI(API):
         all_sides: List[str] = []
         for i in range(0, len(orders), 15):
             # AddOrderBatch has a minimum of 2 and a limit of 15
-            ords = orders[i:i+15]
+            ords = orders[i : i + 15]
             if len(ords) == 1:
                 count, order_txids, sides = self.place_order(pair, ords[0])
             else:
                 count, order_txids, sides = self.place_orders_batch(pair, ords)
             total_count += count
-            if not VALIDATE:
+            if not VALIDATE and order_txids is not None:
                 all_order_txids.extend(order_txids)
             all_sides.extend(sides)
 

@@ -7,3 +7,6 @@ line_length = 79
 profile = "black"
 skip = []
 known_first_party= ["baibaibot"]
+
+[tool.flake8]
+ignore = ["E203"]

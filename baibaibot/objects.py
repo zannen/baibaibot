@@ -35,7 +35,7 @@ class AssetPair:
         return round(price, self.dp_quote)
 
 
-KrakenOrder = Dict[str, Union[str, Dict[str, str]]]
+KrakenOrder = Dict[str, Union[bool, str, Dict[str, str]]]
 
 
 class Order:
