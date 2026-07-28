@@ -1,8 +1,9 @@
 import datetime
 import json
 import logging
+import os
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from .api import API, time_ms_to_str
 from .errors import APIError, NotConnectedError
@@ -11,7 +12,7 @@ from .objects import AssetPair, Order
 from .ohlc import OHLC
 from .ticker import Ticker
 
-VALIDATE = "false"
+VALIDATE = os.getenv("VALIDATE", "true").lower() != "false"
 
 
 class KrakenAPI(API):
@@ -89,7 +90,7 @@ class KrakenAPI(API):
         }
 
     def get_ohlc(self, pair: str) -> OHLC:
-        since = datetime.datetime.utcnow()
+        since = datetime.datetime.now(datetime.UTC)
         since -= datetime.timedelta(
             seconds=self.cfg["order_lifespan_seconds"] * 2
         )
@@ -167,57 +168,91 @@ class KrakenAPI(API):
     def real_pair(self, pair: str) -> str:
         return self.asset_pairs[pair].id
 
-    def place_orders(self, pair: str, orders: List[Order]) -> int:
-        if len(orders) == 1:
-            # AddOrderBatch not possible
-            kraken_order = orders[0].to_kraken()
-            kraken_order["pair"] = pair
-            kraken_order["validate"] = VALIDATE
-            result = self._query_private("AddOrder", data=kraken_order)
-            if VALIDATE == "false":
-                ids = ", ".join(result["txid"])
-            else:
-                ids = "N/A (validate only)"
-            self.logger.info(
-                "Placed %s order. ID: %s",
-                kraken_order["type"],
-                ids,
-            )
-            return 1
+    def place_order(
+        self,
+        pair: str,
+        order: Order,
+    ) -> Tuple[int, Optional[List[str]], List[str]]:
+        # AddOrderBatch not possible
+        kraken_order = order.to_kraken()
+        kraken_order["pair"] = pair
+        kraken_order["validate"] = VALIDATE
+        result = self._query_private("AddOrder", data=kraken_order)
+        order_txids: Optional[List[str]] = None
+        ids = "N/A (validate only)"
+        if not VALIDATE:
+            order_txids = [result["txid"]]
+            ids = order_txids[0]
+        self.logger.info(
+            "Placed %s order. ID: %s",
+            order.side,
+            ids,
+        )
+        return (1, order_txids, [order.side])
 
-        # Use AddOrderBatch
+    def place_orders_batch(
+        self,
+        pair: str,
+        orders: List[Order],
+    ) -> Tuple[int, Optional[List[str]], List[str]]:
+        # Returns (count, order_txids, sides)
+
+        # AddOrderBatch has a minimum of 2 and a limit of 15
         req: Dict[str, Any] = {
             # "deadline": "",
             "orders": [order.to_kraken() for order in orders],
             "pair": pair,
-            "validate": VALIDATE,
         }
-        expected = len(orders)
+        if VALIDATE:
+            req["validate"] = VALIDATE
         result = self._query_private("AddOrderBatch", data=req)
         count = len(result["orders"])
-        sides = ",".join(sorted(set(str(order.side) for order in orders)))
+        sides = sorted(set(str(order.side) for order in orders))
         errors = [itm["error"] for itm in result["orders"] if "error" in itm]
         if len(errors) > 0:
+            errs = ", ".join(errors)
             raise APIError(
-                f"Errors placing batch {sides} orders: " + ", ".join(errors)
+                f"Errors placing batch {",".join(sides)} orders: {errs}"
             )
-        if VALIDATE == "false":
-            ids = ", ".join(item["txid"] for item in result["orders"])
-        else:
-            ids = "N/A (validate only)"
-        self.logger.info(
-            "Placed %d/%d BATCH %s orders. IDs: %s",
-            count,
-            expected,
-            sides,
-            ids,
-        )
-        if count < expected:
+        if count < len(orders):
             self.logger.warning(
                 "Some %s orders were not placed: %d < %d: %s",
-                sides,
+                ",".join(sorted(set(sides))),
                 count,
-                expected,
+                len(orders),
                 json.dumps(result, sort_keys=True),
             )
+        order_txids: Optional[List[str]] = []
+        if not VALIDATE:
+            order_txids = [item["txid"] for item in result["orders"]]
+        return (count, order_txids, sides)
+
+    def place_orders(self, pair: str, orders: List[Order]) -> int:
+        total_count = 0
+        all_order_txids: List[str] = []
+        all_sides: List[str] = []
+        for i in range(0, len(orders), 15):
+            # AddOrderBatch has a minimum of 2 and a limit of 15
+            ords = orders[i : i + 15]
+            if len(ords) == 1:
+                count, order_txids, sides = self.place_order(pair, ords[0])
+            else:
+                count, order_txids, sides = self.place_orders_batch(pair, ords)
+            total_count += count
+            if not VALIDATE and order_txids is not None:
+                all_order_txids.extend(order_txids)
+            all_sides.extend(sides)
+
+        if VALIDATE:
+            ids = "N/A (validate only)"
+        else:
+            ids = ", ".join(all_order_txids)
+        sides_str = ",".join(sorted(set(all_sides)))
+        self.logger.info(
+            "Placed %d/%d BATCH %s orders. IDs: %s",
+            total_count,
+            len(orders),
+            sides_str,
+            ids,
+        )
         return count

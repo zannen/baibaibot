@@ -35,7 +35,7 @@ jobs:
           venv="$tmpdir/venv"
           virtualenv "$venv"
           source "$venv/bin/activate"
-          pip install flake8
+          grep -i "^flake8" test-requirements.txt | xargs pip install
           flake8 .
 
       - name: Lint with black
@@ -44,7 +44,7 @@ jobs:
           venv="$tmpdir/venv"
           virtualenv "$venv"
           source "$venv/bin/activate"
-          pip install black
+          grep "^black==" test-requirements.txt | xargs pip install
           black --check .
 
       - name: Lint with isort
@@ -53,7 +53,7 @@ jobs:
           venv="$tmpdir/venv"
           virtualenv "$venv"
           source "$venv/bin/activate"
-          pip install isort
+          grep "^isort==" test-requirements.txt | xargs pip install
           isort --check .
 
       - name: Type-check with mypy
@@ -62,7 +62,7 @@ jobs:
           venv="$tmpdir/venv"
           virtualenv "$venv"
           source "$venv/bin/activate"
-          pip install mypy types-requests
+          grep -E '^(mypy|types-requests)==' test-requirements.txt | xargs pip install
           mypy --ignore-missing-imports .
 
       - name: Lint with pylint
@@ -73,7 +73,6 @@ jobs:
           source "$venv/bin/activate"
           pip install -r requirements.txt
           pip install -r test-requirements.txt
-          pip install pylint
           ./.pylint.sh
 
       - name: Tests
@@ -83,7 +82,7 @@ jobs:
           virtualenv "$venv"
           source "$venv/bin/activate"
           pip install -r requirements.txt
-          pip install pytest
+          grep '^pytest==' test-requirements.txt | xargs pip install
           pip install -e .
           pytest
 
@@ -94,7 +93,7 @@ jobs:
           virtualenv "$venv"
           source "$venv/bin/activate"
           pip install -r requirements.txt
-          pip install coverage pytest
+          grep -E '^(coverage|pytest)==' test-requirements.txt | xargs pip install
           pip install -e .
           coverage run -m pytest
           coverage report
