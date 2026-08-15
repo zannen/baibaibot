@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Union
 
 from .errors import APIError, SubclassError
 from .objects import AssetPair, Order
+from .ohlc import OHLC
 from .ticker import Ticker
 
 
@@ -32,6 +33,9 @@ class API:
     def get_open_orders(self) -> None:
         raise SubclassError()
 
+    def get_ohlc(self, pair: str) -> OHLC:
+        raise SubclassError()
+
     def get_ticker(self, pair: str) -> Ticker:
         raise SubclassError()
 
@@ -52,6 +56,10 @@ class API:
                 unenc / amt * 100.0,
                 asset,
             )
+
+    def print_ohlc(self, pair: str, ohlc: OHLC) -> None:
+        self.logger.info("OHLC for %s: %s", pair, ohlc.header())
+        self.logger.info("OHLC for %s: %s", pair, ohlc.info())
 
     def print_ticker(self, pair: str, ticker: Ticker) -> None:
         quote = self.asset_pairs[pair].quote
@@ -145,6 +153,9 @@ class API:
         ticker = self.get_ticker(pair)
         self.print_ticker(pair, ticker)
 
+        ohlc = self.get_ohlc(pair)
+        self.print_ohlc(pair, ohlc)
+
         for k, minval in market["min"].items():
             val = getattr(ticker, k)
             if val < minval:
@@ -153,11 +164,16 @@ class API:
                 )
                 return 0
 
-        order_count = self.tick_sell_batch(market, ticker)
-        order_count += self.tick_buy_batch(market, ticker)
-        return 0  # order_count
+        order_count = self.tick_sell_batch(market, ticker, ohlc)
+        order_count += self.tick_buy_batch(market, ticker, ohlc)
+        return order_count
 
-    def tick_sell_batch(self, market: Dict[str, Any], ticker: Ticker) -> int:
+    def tick_sell_batch(
+        self,
+        market: Dict[str, Any],
+        ticker: Ticker,
+        ohlc: OHLC,
+    ) -> int:
         # SELL
         # ticker.high: 24h
         # ohlc.high: last 15~30 mins
@@ -197,9 +213,15 @@ class API:
             vol_p,
             vol_mul,
         )
-        base_price = ticker.high
-        orders: List[Order] = []
         msell = market["sell"]
+        ref = msell["ref"]
+        if ref == "day_high":
+            base_price = ticker.high
+        elif ref == "recent_high":
+            base_price = ohlc.high
+        else:
+            raise APIError(f"Unknown reference {ref}")
+        orders: List[Order] = []
         for n in range(1, sell_order_count + 1):
             pcnt_bump_sell = msell["pcnt_bump_a"] * n**2 + msell["pcnt_bump_c"]
             p_sell = asset_pair.round_quote(
@@ -229,7 +251,12 @@ class API:
         count = self.place_orders(pair, orders)
         return count
 
-    def tick_buy_batch(self, market: Dict[str, Any], ticker: Ticker) -> int:
+    def tick_buy_batch(
+        self,
+        market: Dict[str, Any],
+        ticker: Ticker,
+        ohlc: OHLC,
+    ) -> int:
         # BUY
         # ticker.low: 24h
         # ohlc.low: last 15~30 mins
@@ -269,9 +296,15 @@ class API:
             c_base,
             vol_mul,
         )
-        base_price = ticker.low
-        orders: List[Order] = []
         mbuy = market["buy"]
+        ref = mbuy["ref"]
+        if ref == "day_low":
+            base_price = ticker.low
+        elif ref == "recent_low":
+            base_price = ohlc.low
+        else:
+            raise APIError(f"Unknown reference {ref}")
+        orders: List[Order] = []
         for n in range(1, buy_order_count + 1):
             pcnt_bump_buy = mbuy["pcnt_bump_a"] * n**2 + mbuy["pcnt_bump_c"]
             p_buy = asset_pair.round_quote(

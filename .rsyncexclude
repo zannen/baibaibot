@@ -1,5 +1,7 @@
+.coverage
 .git
 htmlcov
 .mypy_cache
 __pycache__
+.pylint.json
 .pytest_cache

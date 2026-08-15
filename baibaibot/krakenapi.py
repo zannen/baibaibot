@@ -31,7 +31,6 @@ class KrakenAPI(API):
         """
         There is no need to cancel orders on Kraken, since GTT orders are used.
         """
-        pass
 
     def connect(self):
         self.krak = KAPI(self.key, self.secret)
@@ -101,15 +100,7 @@ class KrakenAPI(API):
         }
         res = self._query_public("OHLC", params)
         ohlc = (OHLC(res[pair][0]), OHLC(res[pair][1]))
-        result = ohlc[0].merge(ohlc[1])
-
-        if self.logger.level >= logging.INFO:
-            quote = self.asset_pairs[pair].quote
-            hdr = result.header()
-            inf = result.info()
-            self.logger.info("OHLC for %s (in %s): %s", pair, quote, hdr)
-            self.logger.info("OHLC for %s (in %s): %s", pair, quote, inf)
-        return result
+        return ohlc[0].merge(ohlc[1])
 
     def get_open_orders(self) -> None:
         api_open_orders: Dict[str, Dict[str, Any]] = {}
