@@ -2,29 +2,54 @@
     "loglevel": "INFO",
     "exchanges": {
         "Kraken": {
-            "fee_percent": 0.12,
-            "order_lifespan_seconds": 900,
+            "fee_percent": 0.3,
             "inter_apireq_sleep_seconds": 0.1,
+            "order_lifespan_seconds": 900,
             "markets": [
                 {
-                    "pair": "XXBTZEUR",
+                    "pair": "XETHZGBP",
                     "sell": {
-                        "order_count": 2,
-                        "pcnt_bump_a": 0.75,
-                        "pcnt_bump_c": 10.0,
-                        "rebuy_bump_percent": 2.5,
-                        "vol_percent": 10.0
+                        "ref": "day_high",
+                        "order_count": 6,
+                        "pcnt_bump_a": 0.2,
+                        "pcnt_bump_c": 0.2,
+                        "rebuy_bump_percent": 5.0,
+                        "vol_percent": 50
                     },
                     "buy": {
-                        "order_count": 0,
-                        "pcnt_bump_a": 0.75,
-                        "pcnt_bump_c": 1.0,
-                        "resell_bump_percent": 2.5,
-                        "vol_percent": 0.0
+                        "ref": "day_low",
+                        "order_count": 6,
+                        "pcnt_bump_a": 0.2,
+                        "pcnt_bump_c": 0.2,
+                        "resell_bump_percent": 5.0,
+                        "vol_percent": 50
                     },
                     "min": {
-                        "ask": 10000,
-                        "bid": 10000
+                        "ask": 1000.1,
+                        "bid": 1000.1
+                    }
+                },
+                {
+                    "pair": "XETHZGBP",
+                    "sell": {
+                        "ref": "recent_high",
+                        "order_count": 4,
+                        "pcnt_bump_a": 0.2,
+                        "pcnt_bump_c": 0.2,
+                        "rebuy_bump_percent": 5.0,
+                        "vol_percent": 25
+                    },
+                    "buy": {
+                        "ref": "recent_low",
+                        "order_count": 4,
+                        "pcnt_bump_a": 0.2,
+                        "pcnt_bump_c": 0.2,
+                        "resell_bump_percent": 5.0,
+                        "vol_percent": 25
+                    },
+                    "min": {
+                        "ask": 1000.1,
+                        "bid": 1000.1
                     }
                 }
             ]

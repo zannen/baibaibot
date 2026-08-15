@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Run pylint, collect output as json
-pylint --exit-zero --persistent=no -f json baibaibot/ tests/ *.py >.pylint.json
+pylint --exit-zero --persistent=no -f json *.py baibaibot/ tests/ >.pylint.json
 
 jqcmd='[.[]|select(.type==$x)]|length'
 fatals="$(jq --arg x fatal "$jqcmd" .pylint.json)"
@@ -18,7 +18,7 @@ max_refactor=10
 max_convention=10
 max_usage=0
 
-pylint --exit-zero --persistent=no baibaibot/ tests/ *.py
+pylint --exit-zero --persistent=no *.py baibaibot/ tests/
 echo
 echo "Fatal: $fatals (max $max_fatal)"
 echo "Error: $errors (max $max_error)"

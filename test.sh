@@ -1,6 +1,6 @@
 #!/bin/bash
 
-venv="/tmp/venv-baibaibot"
+venv=".venv"
 if ! test -d "$venv" ; then
 	echo "Creating venv"
 	virtualenv "$venv"
@@ -12,11 +12,13 @@ pip install -r requirements.txt 1>/dev/null
 pip install -r test-requirements.txt 1>/dev/null
 pip install -e . 1>/dev/null
 
-flake8 . || exit 1
+to_check=(main.py baibaibot/ tests/)
+
+flake8 "${to_check[@]}" || exit 1
 
 black --check . || exit 1
 
-isort --check . || exit 1
+isort --check "${to_check[@]}" || exit 1
 
 mypy --ignore-missing-imports . || exit 1
 

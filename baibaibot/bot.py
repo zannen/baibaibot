@@ -30,7 +30,8 @@ class Bot:
         self.logger = logging.getLogger("BaiBaiBot")
 
         self.configfile = configfile
-        keys = json.load(open(keysfile, "r"))
+        with open(keysfile, "r", encoding="utf-8") as fh:
+            keys = json.load(fh)
         if "Kraken" in keys:
             self.krak = KrakenAPI(
                 key=keys["Kraken"]["key"],
@@ -65,7 +66,8 @@ class Bot:
         self.exch_fn("get_open_orders")
 
     def load_config(self):
-        self.cfg = json.load(open(self.configfile, "r"))
+        with open(self.configfile, "r", encoding="utf-8") as fh:
+            self.cfg = json.load(fh)
         lvl = self.cfg["loglevel"]
         self.logger.setLevel(lvl)
         for exchange, cfg in self.cfg["exchanges"].items():
